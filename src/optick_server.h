@@ -46,13 +46,14 @@ class Server
 	std::recursive_mutex socketLock;
 
 	CaptureSaveChunkCb saveCb;
+	bool saveCbing;
 
 	Server( short port );
 	~Server();
 
 	bool InitConnection();
 
-	void Send(const char* data, size_t size);
+	void Send(DataResponse::Type type, const char* data, size_t size);
 
 public:
 	void SetSaveCallback(CaptureSaveChunkCb cb);

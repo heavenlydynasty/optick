@@ -14,6 +14,15 @@
         </Grid.RowDefinitions>
         <ScrollViewer VerticalScrollBarVisibility="Auto" x:Name="ScrollArea">
             <Grid>
+                <!--<Grid.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem Header="Export" Click="OnMenuItemClick_Export">
+                            <MenuItem.Icon>
+                                <ContentControl Style="{StaticResource appbar_save}" Margin="-10" Width="26" Height="26"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                    </ContextMenu>
+                </Grid.ContextMenu>-->
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="1*" />

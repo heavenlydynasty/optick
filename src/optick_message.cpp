@@ -144,25 +144,34 @@ IMessage* StartMessage::Create(InputDataStream& stream)
 	stream	>> settings.mode
 			>> settings.categoryMask
 			>> settings.samplingFrequency
+            >> settings.cpuGranularity
+            >> settings.gpuGranularity
 			>> settings.frameLimit
 			>> settings.timeLimitUs
 			>> settings.spikeLimitUs
 			>> settings.memoryLimitMb
 			>> settings.password;
 
+	if (Mode::OFFLINE & settings.mode)
+	{
+		char* filePath = nullptr;
+		OPTICK_SAVE_CAPTURE(filePath, false);
+		if (0 == settings.timeLimitUs && 0 == settings.frameLimit)
+			settings.timeLimitUs = 30 * 60 * 1000 * 1000;
+	}
+
 	if (!settings.password.empty())
 		settings.password = base64_decode(settings.password);
 
 	return msg;
 }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void StopMessage::Apply()
 {
-	Core::Get().DumpCapture();
+    Core::Get().DumpCapture();
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-IMessage* StopMessage::Create(InputDataStream&)
+IMessage* StopMessage::Create(InputDataStream& /*stream*/)
 {
 	return Memory::New<StopMessage>();
 }

@@ -11,6 +11,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.ComponentModel;
+using Microsoft.Win32;
+using Profiler.Archive;
 using Profiler.Data;
 
 namespace Profiler
@@ -202,5 +204,31 @@ namespace Profiler
 				new SourceWindow() { DataContext = windowDataContext }.Show();
 			}
 		}
-	}
+
+        private void OnMenuItemClick_ExportSelect(object sender, RoutedEventArgs args)
+        {
+            ExportFrameTable(CollectionViewSource.GetDefaultView(SummaryTable.SelectedItems));
+        }
+
+        private void OnMenuItemClick_ExportAll(object sender, RoutedEventArgs args)
+        {
+            ExportFrameTable(CollectionViewSource.GetDefaultView(SummaryTable.ItemsSource));
+        }
+
+        private void ExportFrameTable(ICollectionView view)
+        {
+            var factory = ArchiveFactory.Instance();
+            var option = new ArchiveOption
+            {
+                Mode = ArchiveMode.Save,
+                Sources = new List<IArchiveSource>
+                {
+                    new ViewArchiveSource(view),
+
+                },
+                ArchiveType = ArchiveSourceType.View
+            };
+            factory.Archive(ref option);
+        }
+    }
 }

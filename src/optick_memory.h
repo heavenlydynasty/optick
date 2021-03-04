@@ -29,7 +29,7 @@
 #include <cstring>
 #include <new>
 #include <stdlib.h>
-#include <atomic>
+#include <tbb/atomic.h>
 
 #include <array>
 #include <list>
@@ -48,7 +48,7 @@ namespace Optick
 			uint64_t size;
 		};
 
-		static std::atomic<uint64_t> memAllocated;
+		static tbb::atomic<uint64_t> memAllocated;
 
 		static void* (*allocate)(size_t);
 		static void  (*deallocate)(void*);

@@ -137,6 +137,14 @@ namespace Profiler.Data
 
 		public bool IsCoreDataGenerated { get; set; }
 
+        //public ArchiveSourceType SourceType
+        //{
+        //    get
+        //    {
+        //        return ArchiveSourceType.Group;
+        //    }
+        //}
+
 		public FrameList GetFocusThread(ThreadMask mask)
 		{
 			if (Frames == null)
@@ -620,6 +628,16 @@ namespace Profiler.Data
 						FrameGroup group = groups[id];
 						EventFrame frame = new EventFrame(response, group);
 
+						CaptureSettings settings = CaptureSettings.Instance();
+						if (0 != settings.MinFilterLimitUs && frame.Duration < settings.MinFilterLimitUs)
+                        {
+							break;
+                        }
+						if (0 != settings.MaxFilterLimitUs && settings.MaxFilterLimitUs < frame.Duration)
+                        {
+							break;
+                        }
+
 						group.AddFrame(frame);
 
 						if (group.Board.MainThreadIndex != -1 && group.Board.MainThreadIndex == frame.Header.ThreadIndex)
@@ -734,6 +752,18 @@ namespace Profiler.Data
 			}
 		}
 	}
+
+    public class Document
+    {
+        private static Document document_ = null;
+        public FrameCollection Frames { get; set; }
+        public static Document  Instance()
+        {
+            if (null == document_)
+                document_ = new Document();
+            return document_;
+        }
+    }
 
 	public class TestFrameCollection : FrameCollection
 	{

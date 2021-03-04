@@ -19,6 +19,7 @@ namespace Profiler.Data
 
 		public bool IsLoaded { get; protected set; }
 		public abstract void Load();
+		public abstract void Clear();
 
 		public Frame(DataResponse response, FrameGroup group)
 		{

@@ -115,6 +115,7 @@ namespace Profiler.Controls
 		public bool LoadFile(string path)
 		{
             timeLine.Clear();
+			CaptureSettingsVM.GetSettings();
 			if (timeLine.LoadFile(path))
 			{
 				_captureName = path;
@@ -220,7 +221,7 @@ namespace Profiler.Controls
 		private void ClearButton_Click(object sender, System.Windows.RoutedEventArgs e)
 		{
 			timeLine.Clear();
-			EventThreadViewControl.Group = null;
+			EventThreadViewControl.Clear();
 			SummaryVM.Summary = null;
             SummaryVM.CaptureName = null;
 
@@ -270,13 +271,7 @@ namespace Profiler.Controls
 
 		private void OnOpenCommandExecuted(object sender, ExecutedRoutedEventArgs args)
 		{
-			System.Windows.Forms.OpenFileDialog dlg = new System.Windows.Forms.OpenFileDialog();
-			dlg.Filter = "Optick Capture (*.opt)|*.opt|Chrome Trace (*.json)|*.json|FTrace Capture (*.ftrace)|*.ftrace";
-			dlg.Title = "Load profiler results?";
-			if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-			{
-				RaiseEvent(new OpenCaptureEventArgs(dlg.FileName));
-			}
+			RaiseEvent(new OpenCaptureEventArgs(null));
 		}
 
 		private void OnSaveCommandExecuted(object sender, ExecutedRoutedEventArgs args)

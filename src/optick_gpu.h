@@ -41,7 +41,7 @@ namespace Optick
 	public:
 		static const int MAX_FRAME_EVENTS = 1024;
 		static const int NUM_FRAMES_DELAY = 4;
-		static const int MAX_QUERIES_COUNT = (2 * MAX_FRAME_EVENTS) * NUM_FRAMES_DELAY;
+		static const int MAX_QUERIES_COUNT =  MAX_FRAME_EVENTS * 64;
 	protected:
 
 		enum State
@@ -91,7 +91,7 @@ namespace Optick
 			array<QueryFrame, NUM_FRAMES_DELAY> queryGpuframes;
 			array<int64_t, MAX_QUERIES_COUNT> queryGpuTimestamps;
 			array<int64_t*, MAX_QUERIES_COUNT> queryCpuTimestamps;
-			std::atomic<uint32_t> queryIndex;
+			tbb::atomic<uint32_t> queryIndex;
 
 			ClockSynchronization clock;
 
@@ -99,7 +99,7 @@ namespace Optick
 
 			uint32_t QueryTimestamp(int64_t* outCpuTimestamp)
 			{
-				uint32_t index = queryIndex.fetch_add(1) % MAX_QUERIES_COUNT;
+				uint32_t index = queryIndex.fetch_and_increment() % MAX_QUERIES_COUNT;
 				queryCpuTimestamps[index] = outCpuTimestamp;
 				return index;
 			}
@@ -135,6 +135,7 @@ namespace Optick
 		virtual void Start(uint32 mode);
 		virtual void Stop(uint32 mode);
 		virtual void Dump(uint32 mode);
+		virtual void Clear();
 
 		virtual string GetName() const;
 
@@ -142,6 +143,12 @@ namespace Optick
 		virtual ClockSynchronization GetClockSynchronization(uint32_t nodeIndex) = 0;
 		virtual void QueryTimestamp(void* context, int64_t* cpuTimestampOut) = 0;
 		virtual void Flip(void* swapChain) = 0;
+
+        virtual void BeginFrame();
+        virtual void EndFrame();
+
+        virtual void BeginDrawEvent(uint64_t color, char const* formatString, ...);
+        virtual void EndDrawEvent();
 
 		virtual ~GPUProfiler();
 	};

@@ -37,7 +37,22 @@
   </UserControl.Resources>
   
 	<Grid x:Name="LayoutRoot" Margin="0">
-		<Grid.RowDefinitions>
+        <Grid.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Export Select" Click="OnMenuItemClick_ExportSelect">
+                    <MenuItem.Icon>
+                        <ContentControl Style="{StaticResource appbar_save}" Margin="-10" Width="26" Height="26"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator />
+                    <MenuItem Header="Export All" Click="OnMenuItemClick_ExportAll">
+                    <MenuItem.Icon>
+                        <ContentControl Style="{StaticResource appbar_save}" Margin="-10" Width="26" Height="26"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </ContextMenu>
+        </Grid.ContextMenu>
+        <Grid.RowDefinitions>
 			<RowDefinition Height="Auto"/>
 			<RowDefinition Height="413*"/>
 		</Grid.RowDefinitions>

@@ -64,6 +64,11 @@ namespace Optick
 		clock_gettime(CLOCK_REALTIME, &ts);
 		return ts.tv_sec * 1000000000LL + ts.tv_nsec;
 	}
+
+    wstring StringtoWstring(const char* str)
+	{
+        return wstring();
+	}
 }
 
 #if OPTICK_ENABLE_TRACING

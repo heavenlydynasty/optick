@@ -63,6 +63,21 @@ namespace Optick
 		QueryPerformanceCounter(&largeInteger);
 		return largeInteger.QuadPart;
 	}
+
+    wstring Platform::StringtoWstring(const char* str)
+	{
+        const int len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+        if (0 != len)
+        {
+            wchar_t* strDest = new wchar_t[len];
+            MultiByteToWideChar(CP_ACP, 0, str, -1, strDest, len);
+            wstring wstr(strDest);
+            delete[] strDest;
+            strDest = nullptr;
+            return wstr;
+        }
+        return wstring();
+	}
 }
 
 #if OPTICK_ENABLE_TRACING

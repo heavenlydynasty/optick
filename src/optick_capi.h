@@ -44,7 +44,15 @@ extern "C" {
 #if USE_OPTICK
 	OPTICK_API void OptickAPI_RegisterThread(const char* inThreadName, uint16_t inThreadNameLength);
 
-	OPTICK_API uint64_t OptickAPI_CreateEventDescription(const char* inFunctionName, uint16_t inFunctionLength, const char* inFileName, uint16_t inFileNameLenght, uint32_t inFileLine);
+	OPTICK_API uint64_t OptickAPI_CreateEventDescription(
+		const char* inFunctionName,
+		uint16_t inFunctionLength,
+		const char* inFileName,
+		uint16_t inFileNameLenght,
+		uint32_t inFileLine,
+		const char* eventName = nullptr,
+		uint64_t category = 0,
+		uint64_t granularity = 0);
 	OPTICK_API uint64_t OptickAPI_PushEvent(uint64_t inEventDescription);
 	OPTICK_API void OptickAPI_PopEvent(uint64_t inEventData);
 	

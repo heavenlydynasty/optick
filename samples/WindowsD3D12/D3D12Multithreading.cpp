@@ -740,6 +740,7 @@ void D3D12Multithreading::OnUpdate()
 
 	if (m_keyboardInput.animate)
 	{
+        OPTICK_SIMPLE_EVENT();
 		for (int i = 0; i < NumLights; i++)
 		{
 			float direction = frameChange * powf(-1.0f, (float)i);
@@ -762,97 +763,100 @@ void D3D12Multithreading::OnUpdate()
 void D3D12Multithreading::OnRender()
 {
 	OPTICK_CATEGORY("OnRender", Optick::Category::Rendering);
+    {
+        OPTICK_SIMPLE_EVENT();
 
-	BeginFrame();
+            BeginFrame();
 
 #if SINGLETHREADED
-	for (int i = 0; i < NumContexts; i++)
-	{
-		WorkerThread(i);
-	}
-	MidFrame();
-	EndFrame();
-	m_commandQueue->ExecuteCommandLists(_countof(m_pCurrentFrameResource->m_batchSubmit), m_pCurrentFrameResource->m_batchSubmit);
+        for (int i = 0; i < NumContexts; i++)
+        {
+            WorkerThread(i);
+        }
+        MidFrame();
+        EndFrame();
+        m_commandQueue->ExecuteCommandLists(_countof(m_pCurrentFrameResource->m_batchSubmit), m_pCurrentFrameResource->m_batchSubmit);
 #else
-	for (int i = 0; i < NumContexts; i++)
-	{
-		OPTICK_EVENT("SetEvent");
-		SetEvent(m_workerBeginRenderFrame[i]); // Tell each worker to start drawing.
-	}
+        for (int i = 0; i < NumContexts; i++)
+        {
+            OPTICK_EVENT("SetEvent");
+            SetEvent(m_workerBeginRenderFrame[i]); // Tell each worker to start drawing.
+        }
 
-	MidFrame();
-	EndFrame();
+        MidFrame();
+        EndFrame();
 
-	{
-		OPTICK_CATEGORY("WaitForShadows", Optick::Category::Wait);
-		WaitForMultipleObjects(NumContexts, m_workerFinishShadowPass, TRUE, INFINITE);
-	}
+        {
+            OPTICK_CATEGORY("WaitForShadows", Optick::Category::Wait);
+            WaitForMultipleObjects(NumContexts, m_workerFinishShadowPass, TRUE, INFINITE);
+        }
 
-	// You can execute command lists on any thread. Depending on the work 
-	// load, apps can choose between using ExecuteCommandLists on one thread 
-	// vs ExecuteCommandList from multiple threads.
-	{
-		OPTICK_EVENT("ExecuteCommandLists");
-		m_commandQueue->ExecuteCommandLists(NumContexts + 2, m_pCurrentFrameResource->m_batchSubmit); // Submit PRE, MID and shadows.
-	}
+        // You can execute command lists on any thread. Depending on the work 
+        // load, apps can choose between using ExecuteCommandLists on one thread 
+        // vs ExecuteCommandList from multiple threads.
+        {
+            OPTICK_EVENT("ExecuteCommandLists");
+            m_commandQueue->ExecuteCommandLists(NumContexts + 2, m_pCurrentFrameResource->m_batchSubmit); // Submit PRE, MID and shadows.
+        }
 
-	{
-		OPTICK_CATEGORY("WaitForRenderFrame", Optick::Category::Wait);
-		WaitForMultipleObjects(NumContexts, m_workerFinishedRenderFrame, TRUE, INFINITE);
-	}
+        {
+            OPTICK_CATEGORY("WaitForRenderFrame", Optick::Category::Wait);
+            WaitForMultipleObjects(NumContexts, m_workerFinishedRenderFrame, TRUE, INFINITE);
+        }
 
-	// Submit remaining command lists.
-	{
-		OPTICK_EVENT("ExecuteCommandLists");
-		m_commandQueue->ExecuteCommandLists(_countof(m_pCurrentFrameResource->m_batchSubmit) - NumContexts - 2, m_pCurrentFrameResource->m_batchSubmit + NumContexts + 2);
-	}
+        // Submit remaining command lists.
+        {
+            OPTICK_EVENT("ExecuteCommandLists");
+            m_commandQueue->ExecuteCommandLists(_countof(m_pCurrentFrameResource->m_batchSubmit) - NumContexts - 2, m_pCurrentFrameResource->m_batchSubmit + NumContexts + 2);
+        }
 #endif
 
-	m_cpuTimer.Tick(NULL);
-	if (m_titleCount == TitleThrottle)
-	{
-		WCHAR cpu[64];
-		swprintf_s(cpu, L"%.4f CPU", m_cpuTime / m_titleCount);
-		SetCustomWindowText(cpu);
+        m_cpuTimer.Tick(NULL);
+        if (m_titleCount == TitleThrottle)
+        {
+            WCHAR cpu[64];
+            swprintf_s(cpu, L"%.4f CPU", m_cpuTime / m_titleCount);
+            SetCustomWindowText(cpu);
 
-		m_titleCount = 0;
-		m_cpuTime = 0;
-	}
-	else
-	{
-		m_titleCount++;
-		m_cpuTime += m_cpuTimer.GetElapsedSeconds() * 1000;
-		m_cpuTimer.ResetElapsedTime();
-	}
-
-
-	if (g_TakingScreenshot)
-	{
-		ThrowIfFailed(SaveWICTextureToFile(m_commandQueue.Get(), m_renderTargets[m_frameIndex].Get(),
-			GUID_ContainerFormatJpeg, g_ScreenshotRequest.c_str(),
-			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT)
-		);
-		g_TakingScreenshot = false;
-	}
-
-	// Present and update the frame index for the next frame.
-	//PIXBeginEvent(m_commandQueue.Get(), 0, L"Presenting to screen");
-	{
-		OPTICK_GPU_FLIP(m_swapChain.Get());
-		OPTICK_CATEGORY("Present", Optick::Category::Wait);
-		ThrowIfFailed(m_swapChain->Present(1, 0));
-	}
+            m_titleCount = 0;
+            m_cpuTime = 0;
+        }
+        else
+        {
+            m_titleCount++;
+            m_cpuTime += m_cpuTimer.GetElapsedSeconds() * 1000;
+            m_cpuTimer.ResetElapsedTime();
+        }
 
 
+        if (g_TakingScreenshot)
+        {
+            ThrowIfFailed(SaveWICTextureToFile(m_commandQueue.Get(), m_renderTargets[m_frameIndex].Get(),
+                GUID_ContainerFormatJpeg, g_ScreenshotRequest.c_str(),
+                D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_PRESENT)
+            );
+            g_TakingScreenshot = false;
+        }
+
+        // Present and update the frame index for the next frame.
+        //PIXBeginEvent(m_commandQueue.Get(), 0, L"Presenting to screen");
+        {
+            OPTICK_GPU_FLIP(m_swapChain.Get());
+            OPTICK_CATEGORY("Present", Optick::Category::Wait);
+            ThrowIfFailed(m_swapChain->Present(1, 0));
+        }
 
 
-	//PIXEndEvent(m_commandQueue.Get());
-	m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
-	// Signal and increment the fence value.
-	m_pCurrentFrameResource->m_fenceValue = m_fenceValue;
-	ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_fenceValue));
-	m_fenceValue++;
+
+        //PIXEndEvent(m_commandQueue.Get());
+        m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+
+        // Signal and increment the fence value.
+        m_pCurrentFrameResource->m_fenceValue = m_fenceValue;
+        ThrowIfFailed(m_commandQueue->Signal(m_fence.Get(), m_fenceValue));
+        m_fenceValue++;
+    }
 }
 
 void D3D12Multithreading::OnDestroy()

@@ -57,6 +57,8 @@ namespace Optick
 		static OPTICK_INLINE Trace* CreateTrace();
 		// Symbol Resolver
 		static OPTICK_INLINE SymbolEngine* CreateSymbolEngine();
+        // String to Wstring
+        static OPTICK_API wstring StringtoWstring(const char* str);
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

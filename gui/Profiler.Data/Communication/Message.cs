@@ -210,6 +210,8 @@ namespace Profiler.Data
             writer.Write((UInt32)Settings.Mode);
             writer.Write(Settings.CategoryMask);
             writer.Write(Settings.SamplingFrequencyHz);
+            writer.Write(Settings.CpuGranularityLv);
+            writer.Write(Settings.GpuGranularityLv);
             writer.Write(Settings.FrameLimit);
 			writer.Write(Settings.TimeLimitUs);
 			writer.Write(Settings.MaxSpikeLimitUs);

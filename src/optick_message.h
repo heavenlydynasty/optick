@@ -106,6 +106,10 @@ struct CaptureSettings
 	uint32 categoryMask;
 	// Tracer: Sampling Frequency
 	uint32 samplingFrequency;
+    // CPU Sampling Granularity
+    uint32 cpuGranularity;
+    // GPU Sampling Granularity
+    uint32 gpuGranularity;
 	// Max Duration for a capture (frames)
 	uint32 frameLimit;
 	// Max Duration for a capture (us)
@@ -117,7 +121,7 @@ struct CaptureSettings
 	// Tracer: Root Password for the Device
 	string password;
 
-	CaptureSettings() : mode(0), categoryMask(0), samplingFrequency(0), frameLimit(0), timeLimitUs(0), spikeLimitUs(0), memoryLimitMb(0) {}
+	CaptureSettings() : mode(0), categoryMask(0), samplingFrequency(0), cpuGranularity(0), gpuGranularity(0), frameLimit(0), timeLimitUs(0), spikeLimitUs(0), memoryLimitMb(0) {}
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 struct StartMessage : public Message<IMessage::Start>

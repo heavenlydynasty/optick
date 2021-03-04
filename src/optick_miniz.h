@@ -141,7 +141,7 @@
 /////////////////////////// OPTICK MODIFICATIONS ///////////////////////////////
 #include "optick.config.h"													  //
 																			  //	
-#define OPTICK_ENABLE_COMPRESSION	  (1)									  //
+#define OPTICK_ENABLE_COMPRESSION	  (0)									  //
 																			  //
 #define MINIZ_NO_MALLOC				  (1)									  //
 #define MINIZ_NO_STDIO			      (1)									  //

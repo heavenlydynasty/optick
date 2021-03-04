@@ -14,6 +14,7 @@
         <models:SamplingFrequencyConverter x:Key="SamplingFrequencyConverter" />
         <Controls:DisplayNameConverter x:Key="DisplayNameConverter" />
         <Controls:DisplayDescriptionConverter x:Key="DisplayDescriptionConverter" />
+        <models:GranularityConverter x:Key="GranularityConverter" />
         <Controls:StringToResource x:Key="StringToResource" />
     </UserControl.Resources>
     <StackPanel Orientation="Vertical">
@@ -42,6 +43,42 @@
                             <StackPanel Orientation="Horizontal">
                                 <Label Content="{Binding}" Margin="0" FontWeight="Bold" Width="45" />
                                 <Label Content="{Binding Converter={StaticResource SamplingFrequencyConverter}}" Margin="4,0" Opacity="0.5" HorizontalContentAlignment="Right" Width="55" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox MahApps:ControlsHelper.ContentCharacterCasing="Normal" Header="CPU Granularity">
+            <StackPanel Orientation="Vertical" Margin="1">
+                <ComboBox ItemsSource="{Binding CpuGranularityList, Mode=OneTime}" SelectedItem="{Binding CpuGranularityLv}" ToolTip="Collect callstacks at specified cpu granularity level">
+                    <ComboBox.Resources>
+                        <sys:Double x:Key="FloatingWatermarkFontSize">12</sys:Double>
+                    </ComboBox.Resources>
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="{Binding}" Margin="0" FontWeight="Bold" Width="45" />
+                                <Label Content="{Binding Converter={StaticResource GranularityConverter}}" Margin="4,0" Opacity="0.5" HorizontalContentAlignment="Right" Width="55" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox MahApps:ControlsHelper.ContentCharacterCasing="Normal" Header="GPU Granularity">
+            <StackPanel Orientation="Vertical" Margin="1">
+                <ComboBox ItemsSource="{Binding GpuGranularityList, Mode=OneTime}" SelectedItem="{Binding GpuGranularityLv}" ToolTip="Collect callstacks at specified gpu granularity level">
+                    <ComboBox.Resources>
+                        <sys:Double x:Key="FloatingWatermarkFontSize">12</sys:Double>
+                    </ComboBox.Resources>
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Label Content="{Binding}" Margin="0" FontWeight="Bold" Width="45" />
+                                <Label Content="{Binding Converter={StaticResource GranularityConverter}}" Margin="4,0" Opacity="0.5" HorizontalContentAlignment="Right" Width="55" />
                             </StackPanel>
                         </DataTemplate>
                     </ComboBox.ItemTemplate>

@@ -23,10 +23,13 @@ namespace Profiler
 
 		}
 
-		private void Reconnect()
+		public void Reconnect()
 		{
 			if (client.Client.Connected)
-				client.Client.Disconnect(true);
+            {
+				client.Client.Disconnect(false);
+				client.Close();
+			}
 
 			client = new TcpClient();
 		}

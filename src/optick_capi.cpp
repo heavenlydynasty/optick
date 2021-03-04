@@ -39,12 +39,27 @@ OPTICK_API void OptickAPI_RegisterThread(const char* inThreadName, uint16_t inTh
 	Optick::RegisterThread(threadName.data);
 }
 
-OPTICK_API uint64_t OptickAPI_CreateEventDescription(const char* inFunctionName, uint16_t inFunctionLength, const char* inFileName, uint16_t inFileNameLenght, uint32_t inFileLine)
+OPTICK_API uint64_t OptickAPI_CreateEventDescription(
+	const char* inFunctionName,
+	uint16_t inFunctionLength,
+	const char* inFileName,
+	uint16_t inFileNameLenght,
+	uint32_t inFileLine,
+	const char* eventName,
+	uint64_t category,
+	uint64_t granularity)
 {
 	Optick::OptickString<128> name(inFunctionName, inFunctionLength);
 	Optick::OptickString<256> file(inFileName, inFileNameLenght);
 	uint8_t flags = Optick::EventDescription::COPY_NAME_STRING | Optick::EventDescription::COPY_FILENAME_STRING | Optick::EventDescription::IS_CUSTOM_NAME;
-	return (uint64_t)::Optick::CreateDescription(name.data, file.data, inFileLine, nullptr, Optick::Category::None, flags);
+	return (uint64_t)::Optick::CreateDescription(
+		name.data,
+		file.data,
+		inFileLine,
+		eventName,
+		(::Optick::Category::Type)category,
+		flags,
+		(::Optick::Granularity::Type)granularity);
 }
 OPTICK_API uint64_t OptickAPI_PushEvent(uint64_t inEventDescription)
 {
@@ -77,34 +92,34 @@ OPTICK_API void OptickAPI_StopCapture(const char* inFileName, uint16_t inFileNam
 	Optick::SaveCapture(fileName.data);
 }
 
-OPTICK_API void OptickAPI_AttachTag_String(uint64_t inEventDescription, const char* inValue, uint16_t inValueLength)
+OPTICK_API void OptickAPI_AttachTag_String(uint64_t eventData, uint64_t inEventDescription, const char* inValue, uint16_t inValueLength)
 {
-	Optick::Tag::Attach(*(Optick::EventDescription*)inEventDescription, inValue, inValueLength);
+	Optick::Tag::Attach((Optick::EventData*)eventData, *(Optick::EventDescription*)inEventDescription, inValue, inValueLength);
 }
 
-OPTICK_API void OptickAPI_AttachTag_Int32(uint64_t inEventDescription, int32_t inValue)
+OPTICK_API void OptickAPI_AttachTag_Int32(uint64_t eventData, uint64_t inEventDescription, int32_t inValue)
 {
-	Optick::Tag::Attach(*(Optick::EventDescription*)inEventDescription, inValue);
+	Optick::Tag::Attach((Optick::EventData*)eventData, *(Optick::EventDescription*)inEventDescription, inValue);
 }
 
-OPTICK_API void OptickAPI_AttachTag_Float(uint64_t inEventDescription, float inValue)
+OPTICK_API void OptickAPI_AttachTag_Float(uint64_t eventData, uint64_t inEventDescription, float inValue)
 {
-	Optick::Tag::Attach(*(Optick::EventDescription*)inEventDescription, inValue);
+	Optick::Tag::Attach((Optick::EventData*)eventData, *(Optick::EventDescription*)inEventDescription, inValue);
 }
 
-OPTICK_API void OptickAPI_AttachTag_UInt32(uint64_t inEventDescription, uint32_t inValue)
+OPTICK_API void OptickAPI_AttachTag_UInt32(uint64_t eventData, uint64_t inEventDescription, uint32_t inValue)
 {
-	Optick::Tag::Attach(*(Optick::EventDescription*)inEventDescription, inValue);
+	Optick::Tag::Attach((Optick::EventData*)eventData, *(Optick::EventDescription*)inEventDescription, inValue);
 }
 
-OPTICK_API void OptickAPI_AttachTag_UInt64(uint64_t inEventDescription, uint64_t inValue)
+OPTICK_API void OptickAPI_AttachTag_UInt64(uint64_t eventData, uint64_t inEventDescription, uint64_t inValue)
 {
-	Optick::Tag::Attach(*(Optick::EventDescription*)inEventDescription, inValue);
+	Optick::Tag::Attach((Optick::EventData*)eventData, *(Optick::EventDescription*)inEventDescription, inValue);
 }
 
-OPTICK_API void OptickAPI_AttachTag_Point(uint64_t inEventDescription, float x, float y, float z)
+OPTICK_API void OptickAPI_AttachTag_Point(uint64_t eventData, uint64_t inEventDescription, float x, float y, float z)
 {
-	Optick::Tag::Attach(*(Optick::EventDescription*)inEventDescription, x, y, z);
+	Optick::Tag::Attach((Optick::EventData*)eventData, *(Optick::EventDescription*)inEventDescription, x, y, z);
 }
 
 #endif //USE_OPTICK

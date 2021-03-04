@@ -21,6 +21,8 @@ using System.Windows.Threading;
 using System.Diagnostics;
 using Profiler.Controls;
 using System.Threading.Tasks;
+using Microsoft.Win32;
+using Frame = Profiler.Data.Frame;
 
 namespace Profiler.Controls
 {
@@ -128,6 +130,11 @@ namespace Profiler.Controls
 
 			UpdateRows();
 		}
+
+		public void Clear()
+        {
+			Rows.Clear();
+        }
 
 		public void ReinitRows(List<ThreadRow> rows)
 		{
@@ -312,6 +319,7 @@ namespace Profiler.Controls
 
 		public delegate void OnShowPopupHandler(List<Object> dataContext);
 		public event OnShowPopupHandler OnShowPopup;
+        private System.Drawing.Point selectPosition_;
 
 		private void MouseShowPopup(System.Windows.Forms.MouseEventArgs args)
 		{
@@ -330,6 +338,7 @@ namespace Profiler.Controls
 		private void MouseClickLeft(System.Windows.Forms.MouseEventArgs args)
 		{
 			System.Drawing.Point e = new System.Drawing.Point(args.X, args.Y);
+            selectPosition_ = e;
 			foreach (ThreadRow row in Rows)
 			{
 				if (row.Offset <= e.Y && e.Y <= row.Offset + row.Height)
@@ -338,6 +347,18 @@ namespace Profiler.Controls
 				}
 			}
 		}
+
+        private void OnMenuItemClick_Export(object sender, RoutedEventArgs args)
+        {
+            System.Drawing.Point e = new System.Drawing.Point(selectPosition_.X, selectPosition_.Y);
+            foreach (ThreadRow row in Rows)
+            {
+                if (row.Offset <= e.Y && e.Y <= row.Offset + row.Height)
+                {
+                    row.Export(new Point(e.X, e.Y - row.Offset), Scroll);
+                }
+            }
+        }
 
 		ThreadRow GetRow(double posY)
 		{

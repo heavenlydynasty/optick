@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Profiler.Archive;
 
 namespace Profiler.Data
 {
@@ -46,9 +47,16 @@ namespace Profiler.Data
 		{
 			if (File.Exists(path))
 			{
-				using (Stream stream = Capture.Create(path))
+                var option = new ArchiveOption
+                {
+                    Mode = ArchiveMode.Open,
+                    Pipeline = ArchivePipeline.Internel
+                };
+                ArchiveFactory.Instance().Archive(ref option);
+
+                using (option.InternelStream)
 				{
-					DataResponse response = DataResponse.Create(stream);
+					DataResponse response = DataResponse.Create(option.InternelStream);
 					if (response != null)
 					{
 						if (response.ResponseType == DataResponse.Type.SummaryPack)

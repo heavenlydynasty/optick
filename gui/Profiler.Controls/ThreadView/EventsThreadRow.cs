@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Windows;
 using Profiler.Data;
 using System.Windows.Media;
+using Microsoft.Win32;
+using Profiler.Archive;
 using Profiler.DirectX;
 
 namespace Profiler.Controls
@@ -46,6 +48,13 @@ namespace Profiler.Controls
 			public long duration;
 		}
 
+
+		public override void Clear()
+        {
+			Group = null;
+			Header.DataContext = null;
+			base.Clear();
+		}
 
 		bool IsUserInitiatedSync(SyncReason reason)
 		{
@@ -570,6 +579,38 @@ namespace Profiler.Controls
 				}
 			}
 		}
+
+        public override void Export(Point point, ThreadScroll scroll)
+        {
+            EventNode node = null;
+            EventFrame frame = null;
+            int level = FindNode(point, scroll, out frame, out node);
+            if (EventNodeSelected != null)
+            {
+                ITick tick = scroll.PixelToTime(point.X);
+                if (frame == null)
+                {
+                    frame = FindFrame(tick);
+                }
+                if (frame != null)
+                {
+                    EventNodeSelected(this, frame, node);
+                }
+                if (node != null)
+                {
+                    var option = new ArchiveOption
+                    {
+                        Mode = ArchiveMode.Save,
+                        Sources = new List<IArchiveSource>
+                        {
+                            new NodeArchiveSource(node)
+                        },
+                        ArchiveType = ArchiveSourceType.Node
+                    };
+                    ArchiveFactory.Instance().Archive(ref option);
+                }
+            }
+        }
 
 		//static Color FilterFrameColor = Colors.LimeGreen;
 		//static Color FilterEntryColor = Colors.Tomato;

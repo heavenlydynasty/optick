@@ -36,6 +36,17 @@ namespace Profiler.Data
 		public virtual List<Tag> Tags { get { return null; } set { } }
 		public virtual List<BaseTreeNode> ShadowNodes { get { return null; } }
 
+		public virtual void Clear()
+        {
+			Parent = null;
+			RootParent = null;
+			if (null != Children)
+			{
+				Children.Clear();
+				Children = null;
+			}
+		}
+
 		public event PropertyChangedEventHandler PropertyChanged;
 		private void Raise(string propertyName)
 		{
@@ -292,34 +303,13 @@ namespace Profiler.Data
 		  : base(root, entry.Description, entry.Duration)
 		{
 			Entry = entry;
+            Tags = new List<Tag>();
 		}
 
-		public void ApplyTags(List<Tag> toAdd, ref int index)
-		{
-			if (index < toAdd.Count && toAdd[index].Start < Entry.Start)
-				++index;
-
-			if (index < toAdd.Count && Entry.IsValid && Entry.Finish < toAdd[index].Start)
-				return;
-
-			for (int i = 0; i < Children.Count; ++i)
-			{
-				EventNode child = Children[i] as EventNode;
-				while (index < toAdd.Count && toAdd[index].Start < child.Entry.Start)
-				{
-					if (tags == null) tags = new List<Tag>();
-					tags.Add(toAdd[index++]);
-				}
-
-				child.ApplyTags(toAdd, ref index);
-			}
-
-			while (index < toAdd.Count && Entry.IsValid && toAdd[index].Start <= Entry.Finish)
-			{
-				if (tags == null) tags = new List<Tag>();
-				tags.Add(toAdd[index++]);
-			}
-		}
+		public void ApplyTags()
+        {
+            Tags.Sort((lhs, rhs) => { return lhs.Id < rhs.Id ? -1 : 1; });
+        }
 
 		public EventNode FindNode(Entry entry)
 		{
@@ -332,23 +322,62 @@ namespace Profiler.Data
 
 			return null;
 		}
+
+		public override void Clear()
+        {
+			if (null != Children)
+			{
+				foreach (EventNode node in Children)
+					node.Clear();
+			}
+			if (null != Entry)
+			{
+				Entry.Clear();
+				Entry = null;
+			}
+			if (null != tags)
+				tags.Clear();
+			base.Clear();
+		}
 	}
 
 	public class EventTree : EventNode
 	{
 		private int depth = 1;
 		private EventFrame frame;
+        private Dictionary<uint, EventNode> eventNodeIds;
 		public EventTree(EventFrame frame, List<Entry> entries) : base(null, new Entry(null, frame.Start, frame.Finish) { Frame = frame })
 		{
 			this.frame = frame;
+            eventNodeIds = new Dictionary<uint, EventNode>();
 			BuildTree(entries);
 			CalculateRecursiveExcludeFlag(new Dictionary<Object, int>());
+		}
+
+		public void Clear()
+        {
+			frame = null;
+			if (null != eventNodeIds)
+            {
+				foreach (var node in eventNodeIds)
+					node.Value.Clear();
+				eventNodeIds.Clear();
+				eventNodeIds = null;
+			}
 		}
 
 		public int Depth
 		{
 			get { return depth - 1; }
 		}
+
+        public EventFrame Frame
+        {
+            get
+            {
+                return frame;
+            }
+        }
 
 		private void BuildTree(List<Entry> entries)
 		{
@@ -361,39 +390,45 @@ namespace Profiler.Data
 
 			foreach (var entry in entries)
 			{
-				if (entry.Start == entry.Finish)
-					continue;
-
-				while (entry.Start >= curNodes.Peek().Entry.Finish)
+                while (curNodes.Count > 0 && entry.Start >= curNodes.Peek().Entry.Finish)
 				{
 					curNodes.Pop();
 				}
 
-				EventNode node = new EventNode(this, entry);
+                EventNode node = new EventNode(this, entry);
+                eventNodeIds[entry.Id] =  node;
 
-				curNodes.Peek().AddChild(node);
+                if (curNodes.Count > 0)
+                    curNodes.Peek().AddChild(node);
 				curNodes.Push(node);
 				depth = Math.Max(depth, curNodes.Count);
 			}
 
-			while (curNodes.Count > 0)
-			{
-				curNodes.Pop();
-			}
-		}
+            curNodes.Clear();
+        }
 
-		public void ForEachChild(TreeNodeDelegate action)
+        public void BuildTags(List<Tag> toAdd)
+        {
+            if (toAdd == null || toAdd.Count == 0 || eventNodeIds.Count == 0)
+                return;
+
+            foreach (var tag in toAdd)
+            {
+                if (eventNodeIds.ContainsKey(tag.EventId))
+                    eventNodeIds[tag.EventId].Tags.Add(tag);
+            }
+
+            foreach (var node in eventNodeIds)
+            {
+                node.Value.ApplyTags();
+            }
+            
+            eventNodeIds.Clear();
+        }
+
+        public void ForEachChild(TreeNodeDelegate action)
 		{
 			Children.ForEach(node => node.ForEach(action));
 		}
-
-		public void ApplyTags(List<Tag> tags)
-		{
-			if (tags == null || tags.Count == 0)
-				return;
-
-			int index = 0;
-			ApplyTags(tags, ref index);
-		}
-	}
+    }
 }

@@ -21,6 +21,8 @@
 // SOFTWARE.
 
 #pragma once
+#include <condition_variable>
+
 #include "optick.config.h"
 
 #if USE_OPTICK
@@ -36,7 +38,7 @@
 
 #include "optick_gpu.h"
 
-#include <atomic>
+#include <tbb/atomic.h>
 
 // We expect to have 1k unique strings going through Optick at once
 // The chances to hit a collision are 1 in 10 trillion (odds of a meteor landing on your house)
@@ -163,12 +165,12 @@ OutputDataStream& operator<<(OutputDataStream &stream, const OptickString<N>& ob
 OutputDataStream& operator<<(OutputDataStream& stream, const Point& ob);
 OutputDataStream& operator<<(OutputDataStream& stream, const ScopeData& ob);
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef MemoryPool<EventData, 1024> EventBuffer;
+typedef MemoryPool<EventData, 10240> EventBuffer;
 typedef MemoryPool<const EventData*, 32> CategoryBuffer;
 typedef MemoryPool<SyncData, 1024> SynchronizationBuffer;
 typedef MemoryPool<FiberSyncData, 1024> FiberSyncBuffer;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-typedef OptickString<32> ShortString;
+typedef OptickString<128> ShortString;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 typedef TagData<float> TagFloat;
 typedef TagData<int32> TagS32;
@@ -181,7 +183,7 @@ typedef MemoryPool<TagFloat, 1024> TagFloatBuffer;
 typedef MemoryPool<TagS32, 1024> TagS32Buffer;
 typedef MemoryPool<TagU32, 1024> TagU32Buffer;
 typedef MemoryPool<TagU64, 1024> TagU64Buffer;
-typedef MemoryPool<TagPoint, 64> TagPointBuffer;
+typedef MemoryPool<TagPoint, 640> TagPointBuffer;
 typedef MemoryPool<TagString, 1024> TagStringBuffer;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -211,8 +213,8 @@ class EventDescriptionBoard
 
 	const char* CacheString(const char* text);
 public:
-	EventDescription* CreateDescription(const char* name, const char* file = nullptr, uint32_t line = 0, uint32_t color = Color::Null, uint32_t filter = 0, uint8_t flags = 0);
-	EventDescription* CreateSharedDescription(const char* name, const char* file = nullptr, uint32_t line = 0, uint32_t color = Color::Null, uint32_t filter = 0);
+	EventDescription* CreateDescription(const char* name, const char* file = nullptr, uint32_t line = 0, uint32_t color = Color::Null, uint32_t filter = 0, uint8_t flags = 0, uint32_t granularity = 0);
+	EventDescription* CreateSharedDescription(const char* name, const char* file = nullptr, uint32_t line = 0, uint32_t color = Color::Null, uint32_t filter = 0,uint8_t flags = 0, uint32_t granularity = 0);
 
 
 	static EventDescriptionBoard& Get();
@@ -449,11 +451,12 @@ struct FrameStorage
 {
 	const EventDescription* m_Description;
 	FrameBuffer m_Frames;
-	std::atomic<uint32_t> m_FrameNumber;
+	tbb::atomic<uint32_t> m_FrameNumber;
 
 	void Clear(bool preserveMemory = true)
 	{
 		m_Frames.Clear(preserveMemory);
+		m_FrameNumber.fetch_and_store(0);
 	}
 
 	FrameStorage() : m_Description(nullptr) {}
@@ -465,6 +468,10 @@ class Core
 {
 	std::recursive_mutex coreLock;
     std::recursive_mutex threadsLock;
+	std::mutex ticklock;
+	std::condition_variable_any tickevent;
+	tbb::atomic<int> shutdownfence;
+	std::thread tick_task;
 
 	ThreadList threads;
 	FiberList fibers;
@@ -493,17 +500,20 @@ class Core
 	vector<ProcessDescription> processDescs;
 	vector<ThreadDescription> threadDescs;
 
-	State::Type currentState;
+    volatile State::Type currentState;
 	State::Type pendingState;
 
 	CaptureSettings settings;
 
 	uint32 forcedMainThreadIndex;
 
+	uint64 elapsedTimeUs;
+
 	void UpdateEvents();
 	bool UpdateState();
+    bool IsCpuMode();
 
-	uint32_t BeginUpdateFrame(FrameType::Type frame, int64_t timestamp, uint64_t threadID);
+    uint32_t BeginUpdateFrame(FrameType::Type frame, int64_t timestamp, uint64_t threadID);
 	uint32_t EndUpdateFrame(FrameType::Type frame, int64_t timestamp, uint64_t threadID);
 
 	Core();
@@ -525,7 +535,10 @@ class Core
 	void GenerateCommonSummary();
 public:
 	void Activate(Mode::Type mode);
-	volatile Mode::Type currentMode;
+    bool IsProfilerCpuGranularity(const uint32_t granularity) const;
+    bool IsProflerGpuGranularity(const uint32_t granularity) const;
+    bool IsProfilerDrawEvent() const;
+    volatile Mode::Type currentMode;
 	volatile Mode::Type previousMode;
 
 	// Active Frame (is used as buffer)
@@ -545,6 +558,9 @@ public:
 
 	// GPU Profiler
 	GPUProfiler* gpuProfiler;
+
+	// Current Frame Data
+	FrameData frameData;
 
 	// Returns thread collection
 	const vector<ThreadEntry*>& GetThreads() const;
@@ -568,8 +584,8 @@ public:
 	bool ReportStackWalk(const CallstackDesc& desc);
 
 	// Serialize and send current profiling progress
-	void DumpProgress(const char* message = "");
-	void DumpProgressFormatted(const char* format, ...);
+	void DumpProgress(uint32 mode, const char* message = "");
+	void DumpProgressFormatted(uint32 mode, const char* format, ...);
 
 	// Too much time from last report
 	bool IsTimeToReportProgress() const;
@@ -612,9 +628,11 @@ public:
 
 	// Initalizes GPU profiler
 	void InitGPUProfiler(GPUProfiler* profiler);
-
+	// get current settings
+	const CaptureSettings& GetSettings() const;
 	// Initializes root password for the device
 	bool SetSettings(const CaptureSettings& settings);
+	uint64 GetElapsedTimeUs() const;
 
 	// Current Frame Number (since the game started)
 	uint32_t GetCurrentFrame(FrameType::Type frameType) const { return frames[frameType].m_FrameNumber; }
@@ -624,6 +642,8 @@ public:
 
 	// Main Update Function
 	void Update();
+    void TickUpdate();
+    void AsyncUpdate();
 
 	// Full Destruction
 	void Shutdown();

@@ -95,19 +95,33 @@ namespace Profiler.Data
 			return null;
 		}
 
-		public static Stream Create(string fileName)
+		static public Stream Create(Stream stream)
 		{
-			return Create(new FileStream(fileName, FileMode.Create));
-		}
+			OptickHeader header = new OptickHeader(stream);
+			if (header.IsValid)
+			{
+				if (header.IsZip)
+					return new GZipStream(stream, CompressionMode.Decompress, false);
 
-		public static Stream Create(Stream stream)
-		{
-			OptickHeader header = new OptickHeader();
-			header.Write(stream);
-			if (header.IsZip)
-				return new GZipStream(stream, CompressionLevel.Fastest);
-			else
+				if (header.IsMiniz)
+				{
+					// Workaround for RFC 1950 vs RFC 1951 mismatch
+					// http://george.chiramattel.com/blog/2007/09/deflatestream-block-length-does-not-match.html
+					stream.ReadByte();
+					stream.ReadByte();
+
+					return new DeflateStream(stream, CompressionMode.Decompress);
+				}
+
 				return stream;
-		}
+
+			}
+			else
+			{
+				stream.Close();
+			}
+
+            return null;
+        }
 	}
 }

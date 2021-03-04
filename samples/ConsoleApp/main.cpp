@@ -47,11 +47,11 @@ int main()
 	cout << "Starting main loop update." << endl;
 
 	// Setting memory allocators
-	OPTICK_SET_MEMORY_ALLOCATOR(
-		[](size_t size) -> void* { return operator new(size); }, 
-		[](void* p) { operator delete(p); }, 
-		[]() { /* Do some TLS initialization here if needed */ }
-	);
+	//OPTICK_SET_MEMORY_ALLOCATOR(
+	//	[](size_t size) -> void* { return operator new(size); }, 
+	//	[](void* p) { operator delete(p); }, 
+	//	[]() { /* Do some TLS initialization here if needed */ }
+	//);
 
 
 	//TestOptickApp(engine);

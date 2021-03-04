@@ -66,6 +66,11 @@ namespace Optick
 		clock_gettime(CLOCK_MONOTONIC, &ts);
 		return ts.tv_sec * 1000000000LL + ts.tv_nsec;
 	}
+
+    wstring StringtoWstring(const char* str)
+	{
+        return wstring();
+	}
 }
 
 #if OPTICK_ENABLE_TRACING
@@ -106,7 +111,7 @@ namespace ft
 			Stopped,
 			//X	dead(should never be seen)
 			Dead,
-			//Z	Defunct(‚Äúzombie‚Äù) process, terminated but not reaped by its parent.
+			//Z	Defunct(°∞zombie°±) process, terminated but not reaped by its parent.
 			Zombie,
 		};
 	};

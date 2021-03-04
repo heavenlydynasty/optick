@@ -30,6 +30,7 @@ using System.IO.Compression;
 using System.Threading.Tasks;
 using System.Security;
 using Profiler.Controls;
+using Profiler.Archive;
 
 namespace Profiler
 {
@@ -58,6 +59,9 @@ namespace Profiler
 			this.InitializeComponent();
 			this.DataContext = frames;
 
+            ArchiveFactory.Instance();
+            ArchiveFactory.Instance().Initialize();
+
 			statusToError.Add(TracerStatus.TRACER_ERROR_ACCESS_DENIED, new KeyValuePair<string, string>("ETW can't start: launch your Game/VisualStudio/UE4Editor as administrator to collect context switches", "https://github.com/bombomby/optick/wiki/Event-Tracing-for-Windows"));
 			statusToError.Add(TracerStatus.TRACER_ERROR_ALREADY_EXISTS, new KeyValuePair<string, string>("ETW session already started (Reboot should help)", "https://github.com/bombomby/optick/wiki/Event-Tracing-for-Windows"));
 			statusToError.Add(TracerStatus.TRACER_FAILED, new KeyValuePair<string, string>("ETW session failed (Run your Game or Visual Studio as Administrator to get ETW data)", "https://github.com/bombomby/optick/wiki/Event-Tracing-for-Windows"));
@@ -68,6 +72,8 @@ namespace Profiler
 
 			socketThread = new Thread(RecieveMessage);
 			socketThread.Start();
+
+            Document.Instance().Frames = frames;
 		}
 
 		private void TimeLine_ConnectionChanged(IPAddress address, UInt16 port, ProfilerClient.State state, String message)
@@ -91,26 +97,33 @@ namespace Profiler
 
 		public bool LoadFile(string file)
 		{
-			if (File.Exists(file))
+			using (new WaitCursor())
 			{
-				using (new WaitCursor())
-				{
-					if (System.IO.Path.GetExtension(file) == ".trace")
+                var option = new ArchiveOption
+                {
+					FileName = file,
+                    Mode = ArchiveMode.Open,
+                    Pipeline = ArchivePipeline.Internel
+                };
+                ArchiveFactory.Instance().Archive(ref option);
+
+                using (option.InternelStream)
+                {
+                    if (System.IO.Path.GetExtension(file) == ".trace")
 					{
 						return OpenTrace<FTraceGroup>(file);
 					}
-					else if (System.IO.Path.GetExtension(file) == ".json")
-					{
-						return OpenTrace<ChromeTracingGroup>(file);	
-					}
-					else
-					{
-						using (Stream stream = Data.Capture.Open(file))
-						{
-							return Open(file, stream);
-						}
-					}
-				}
+
+                    if (System.IO.Path.GetExtension(file) == ".json")
+                    {
+                        return OpenTrace<ChromeTracingGroup>(file);	
+                    }
+
+                    using (option.InternelStream)
+                    {
+                        return Open(file, option.InternelStream);
+                    }
+                }
 			}
 			return false;
 		}
@@ -381,31 +394,24 @@ namespace Profiler
 			currentGroup?.Responses.ForEach(response => action(currentGroup, response));
 		}
 
-		public void Save(Stream stream)
-		{
-			ForEachResponse((group, response) => response.Serialize(stream));
-		}
-
-		public String Save()
-		{
-			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.Filter = "Optick Performance Capture (*.opt)|*.opt";
-			dlg.Title = "Where should I save profiler results?";
-
-			if (dlg.ShowDialog() == true)
-			{
-				lock (frames)
-				{
-					using (Stream stream = Capture.Create(dlg.FileName))
-						Save(stream);
-
-					frames.UpdateName(dlg.FileName, true);
-				}
-				return dlg.FileName;
-			}
-
-			return null;
-		}
+        public String Save()
+        {
+            lock (frames)
+            {
+                var option = new ArchiveOption
+                {
+                    Mode = ArchiveMode.Save,
+                    Sources = new List<IArchiveSource>
+                    {
+                        new FrameArchiveSource(frames)
+                    },
+                    ArchiveType = ArchiveSourceType.Frame
+                };
+                ArchiveFactory.Instance().Archive(ref option);
+                frames.UpdateName(option.FileName, true);
+                return option.FileName;
+            }
+        }
 
 		public void Close()
 		{
@@ -420,6 +426,8 @@ namespace Profiler
 		{
 			lock (frames)
 			{
+				foreach (var frame in frames)
+					frame.Clear();
 				frames.Clear();
 			}
 		}
@@ -443,6 +451,22 @@ namespace Profiler
 
 			Task.Run(() => { ProfilerClient.Get().SendMessage(new StartMessage() { Settings = settings, Password = password } , true); });
 		}
+
+        private void OnMenuItemClick_Export(object sender, RoutedEventArgs e)
+        {
+            FrameCollection frames = new FrameCollection();
+            frames.Add(frameList.SelectedItem as Frame);
+            var option = new ArchiveOption
+            {
+                Mode = ArchiveMode.Save,
+                Sources = new List<IArchiveSource>
+                {
+                    new FrameArchiveSource(frames)
+                },
+                ArchiveType = ArchiveSourceType.Frame
+            };
+            ArchiveFactory.Instance().Archive(ref option);
+        }
 	}
 
 	public class FrameHeightConverter : IValueConverter

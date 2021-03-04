@@ -32,6 +32,11 @@ namespace Profiler.Controls
 			//throw new NotImplementedException();
 		}
 
+        public override void Export(Point point, ThreadScroll scroll)
+        {
+            //throw new NotImplementedException();
+        }
+
 		List<Tick> Timestamps { get; set; }
 		List<Entry> Entries { get; set; }
 

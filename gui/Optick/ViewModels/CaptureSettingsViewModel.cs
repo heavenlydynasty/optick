@@ -64,16 +64,29 @@ namespace Profiler.ViewModels
 			Max = 40000,
 		}
 
+        public enum Granularity
+        {
+            None,
+            Simple,
+            Summary,
+            Detail,
+            Extend,
+            Max,
+        }
+
 		public ObservableCollection<Flag> FlagSettings { get; set; } = new ObservableCollection<Flag>(new Flag[]
 		{
 			//new Flag("Categories", "Collect OPTICK_CATEGORY events", Mode.INSTRUMENTATION_CATEGORIES, true),
 			//new Flag("Events", "Collect OPTICK_EVENT events", Mode.INSTRUMENTATION_EVENTS, true),
-			new Flag("Tags", "Collect OPTICK_TAG events", Mode.TAGS, true),
-			new Flag("Switch Contexts", "Collect Switch Context events (kernel)", Mode.SWITCH_CONTEXT, true),
-			new Flag("Autosampling", "Sample all threads (kernel)", Mode.AUTOSAMPLING, true),
-			new Flag("SysCalls", "Collect system calls ", Mode.SYS_CALLS, true),
-			new Flag("GPU", "Collect GPU events", Mode.GPU, true),
-			new Flag("All Processes", "Collects information about other processes (thread pre-emption)", Mode.OTHER_PROCESSES, true),
+            //new Flag("Live", "Collect events with live mode", Mode.LIVE, false),
+			new Flag("Tags", "Collect OPTICK_TAG events", Mode.TAGS, false),
+			new Flag("Switch Contexts", "Collect Switch Context events (kernel)", Mode.SWITCH_CONTEXT, false),
+			new Flag("Autosampling", "Sample all threads (kernel)", Mode.AUTOSAMPLING, false),
+			new Flag("SysCalls", "Collect system calls ", Mode.SYS_CALLS, false),
+			new Flag("GPU", "Collect GPU events", Mode.GPU, false),
+            new Flag("GPU Debug", "Collect GPU draw events", Mode.GPUDEBUG, false),
+			new Flag("Offline", "Collect events with a opt file at client work directory", Mode.OFFLINE, false),
+			new Flag("All Processes", "Collects information about other processes (thread pre-emption)", Mode.OTHER_PROCESSES, false),
 		});
 
 		public Array SamplingFrequencyList
@@ -89,10 +102,36 @@ namespace Profiler.ViewModels
 			set { SetProperty(ref _samplingFrequency, value); }
 		}
 
+        public Array CpuGranularityList
+        {
+            get { return Enum.GetValues(typeof(Granularity)); }
+        }
+
+        private Granularity cpuGranularity_ = Granularity.Summary;
+        public Granularity CpuGranularityLv
+        {
+            get { return cpuGranularity_; }
+            set { SetProperty(ref cpuGranularity_, value); }
+        }
+
+        public Array GpuGranularityList
+        {
+            get { return Enum.GetValues(typeof(Granularity)); }
+        }
+
+        private Granularity gpuGranularity_ = Granularity.Summary;
+        public Granularity GpuGranularityLv
+        {
+            get { return gpuGranularity_; }
+            set { SetProperty(ref gpuGranularity_, value); }
+        }
+
 		// Frame Limits
 		Numeric FrameCountLimit = new Numeric("Frame Count Limit", "Automatically stops capture after selected number of frames") { Value = 0 };
 		Numeric TimeLimitSec = new Numeric("Time Limit (sec)", "Automatically stops capture after selected number of seconds") { Value = 0 };
 		Numeric MaxSpikeLimitMs = new Numeric("Max Spike (ms)", "Automatically stops capture after selected spike") { Value = 0 };
+		Numeric MinFilterLimitMs = new Numeric("Min Filter (ms)", "Filter frame with min value ") { Value = 0 };
+		Numeric MaxFilterLimitMs = new Numeric("Max Filter (ms)", "Filter Frame with max value") { Value = 0 };
 		public ObservableCollection<Numeric> CaptureLimits { get; set; } = new ObservableCollection<Numeric>();
 
 		// Timeline Settings
@@ -133,6 +172,8 @@ namespace Profiler.ViewModels
 			CaptureLimits.Add(FrameCountLimit);
 			CaptureLimits.Add(TimeLimitSec);
 			CaptureLimits.Add(MaxSpikeLimitMs);
+			CaptureLimits.Add(MinFilterLimitMs);
+			CaptureLimits.Add(MaxFilterLimitMs);
 
 			TimelineSettings.Add(TimelineMinThreadDepth);
 			TimelineSettings.Add(TimelineMaxThreadDepth);
@@ -140,7 +181,8 @@ namespace Profiler.ViewModels
 
 		public CaptureSettings GetSettings()
 		{
-			CaptureSettings settings = new CaptureSettings();
+			CaptureSettings settings = CaptureSettings.Instance();
+			settings.Mode = (Mode.INSTRUMENTATION_CATEGORIES | Mode.INSTRUMENTATION_EVENTS);
 
 			foreach (Flag flag in FlagSettings)
 				if (flag.IsEnabled)
@@ -148,9 +190,14 @@ namespace Profiler.ViewModels
 
 			settings.SamplingFrequencyHz = (uint)SamplingFrequencyHz;
 
+            settings.CpuGranularityLv = (uint) CpuGranularityLv;
+            settings.GpuGranularityLv = (uint)GpuGranularityLv;
+
 			settings.FrameLimit = (uint)FrameCountLimit.Value;
 			settings.TimeLimitUs = (uint)(TimeLimitSec.Value * 1000000);
 			settings.MaxSpikeLimitUs = (uint)(MaxSpikeLimitMs.Value * 1000);
+			settings.MinFilterLimitUs = (uint)(MinFilterLimitMs.Value);
+			settings.MaxFilterLimitUs = (uint)(MaxFilterLimitMs.Value);
 
 			settings.MemoryLimitMb = 0;
 
@@ -175,4 +222,21 @@ namespace Profiler.ViewModels
 			throw new NotImplementedException();
 		}
 	}
+    public class GranularityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            if (value is CaptureSettingsViewModel.Granularity)
+            {
+                return String.Format("{0}", (int)(value));
+            }
+
+            return null;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

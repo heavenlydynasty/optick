@@ -87,6 +87,20 @@
 	</UserControl.DataContext>-->
 
     <Grid x:Name="LayoutRoot" VerticalAlignment="Top">
+        <Grid.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Export" Click="OnMenuItemClick_Export">
+                    <MenuItem.Icon>
+                        <ContentControl Style="{StaticResource appbar_save}" Margin="-10" Width="26" Height="26"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem>
+                <MenuItem.Icon>
+                        <ContentControl Style="{StaticResource appbar_delete}" Margin="-10" Width="26" Height="26"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </ContextMenu>
+        </Grid.ContextMenu>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1*"/>
             <ColumnDefinition Width="Auto"/>

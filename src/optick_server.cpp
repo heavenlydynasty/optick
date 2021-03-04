@@ -24,6 +24,7 @@
 
 #if USE_OPTICK
 #include "optick_common.h"
+#include "optick_core.h"
 #include "optick_miniz.h"
 
 #if defined(OPTICK_MSVC)
@@ -166,6 +167,7 @@ class Socket
 		return false;
 	}
 
+public:
 	void Disconnect()
 	{
 		std::lock_guard<std::recursive_mutex> lock(socketLock);
@@ -175,7 +177,7 @@ class Socket
 			CloseSocket(acceptSocket);
 		}
 	}
-public:
+
 	Socket() : acceptSocket((TcpSocket)-1), listenSocket((TcpSocket)-1)
 	{
 #if defined(USE_WINDOWS_SOCKETS)
@@ -285,7 +287,7 @@ struct OptickHeader
 	OptickHeader() : magic(OPTICK_MAGIC), version(OPTICK_VERSION), flags(0) {}
 };
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-Server::Server(short port) : socket(Memory::New<Socket>()), saveCb(nullptr)
+Server::Server(short port) : socket(Memory::New<Socket>()), saveCb(nullptr), saveCbing(false)
 {
 	if (!socket->Bind(port, 4))
 	{
@@ -407,6 +409,7 @@ void Server::SendStart()
 {
 	if (saveCb != nullptr)
 	{
+		saveCbing = true;
 		OptickHeader header;
 #if OPTICK_ENABLE_COMPRESSION
 		ZLibCompressor::Get().Init();
@@ -416,19 +419,19 @@ void Server::SendStart()
 	}
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-void Server::Send(const char* data, size_t size)
+void Server::Send(DataResponse::Type type, const char* data, size_t size)
 {
-	if (saveCb)
+	socket->Send(data, size);
+	if (DataResponse::Handshake != type &&
+		DataResponse::ReportProgress != type &&
+		saveCb &&
+		saveCbing)
 	{
 #if OPTICK_ENABLE_COMPRESSION
 		ZLibCompressor::Get().Compress(data, size, saveCb);
 #else
 		saveCb(data, size);
 #endif
-	}
-	else
-	{
-		socket->Send(data, size);
 	}
 }
 
@@ -440,8 +443,8 @@ void Server::Send(DataResponse::Type type, OutputDataStream& stream)
 
 	DataResponse response(type, (uint32)data.size());
 
-	Send((char*)&response, sizeof(response));
-	Send(data.c_str(), data.size());
+	Send(type, (char*)&response, sizeof(response));
+	Send(type, data.c_str(), data.size());
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Server::SendFinish()
@@ -456,7 +459,10 @@ void Server::SendFinish()
 #endif
 		saveCb(nullptr, 0);
 		saveCb = nullptr;
+		saveCbing = false;
 	}
+	if (nullptr != socket)
+		socket->Disconnect();
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 bool Server::InitConnection()

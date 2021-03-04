@@ -65,6 +65,17 @@ namespace Profiler.Controls
 			}
 		}
 
+		public void Clear()
+        {
+			if (null != id2row)
+            {
+				foreach (var row in id2row)
+					row.Value.Clear();
+				id2row.Clear();
+			}
+			ThreadViewControl.Clear();
+		}
+
 		private static void OnGroupPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
 		{
 			FrameGroup value = e.NewValue as FrameGroup;

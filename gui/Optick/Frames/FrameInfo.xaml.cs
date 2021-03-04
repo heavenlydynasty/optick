@@ -16,6 +16,8 @@ using System.Threading;
 using System.Windows.Threading;
 using System.Diagnostics;
 using System.Globalization;
+using Microsoft.Win32;
+using Profiler.Archive;
 using Profiler.ViewModels;
 using Profiler.Controls.ViewModels;
 using Profiler.Controls;
@@ -311,6 +313,79 @@ namespace Profiler
 					SampleFunction(frame as EventFrame, CallStackReason.AutoSample, item.DataContext as EventNode);
 				}));
 			}
+		}
+
+		private void MenuExportFunctions(object sender, RoutedEventArgs e)
+        {
+            if (e.Source is FrameworkElement)
+            {
+                FrameworkElement item = e.Source as FrameworkElement;
+
+                Application.Current.Dispatcher.Invoke(new Action(() =>
+                {
+                    if (item.DataContext is EventNode)
+                    {
+                        var option = new ArchiveOption
+                        {
+                            Mode = ArchiveMode.Save,
+                            Sources = new List<IArchiveSource>
+                            {
+                                new NodeArchiveSource(item.DataContext as EventNode)
+                            },
+                            ArchiveType = ArchiveSourceType.Node
+                        };
+                        ArchiveFactory.Instance().Archive(ref option);
+                    }
+                }));
+            }
+        }
+
+        private void MenuDocumentExportTags(object sender, RoutedEventArgs e)
+        {
+            if (e.Source is FrameworkElement)
+            {
+                FrameworkElement item = e.Source as FrameworkElement;
+
+                Application.Current.Dispatcher.Invoke(new Action(() =>
+                {
+                    if (item.DataContext is EventNode)
+                    {
+                        ExportTags(item.DataContext as EventNode, Document.Instance().Frames);
+                    }
+                }));
+            }
+        }
+
+        private void MenuExportFrameTags(object sender, RoutedEventArgs e)
+        {
+            if (e.Source is FrameworkElement)
+            {
+                FrameworkElement item = e.Source as FrameworkElement;
+
+                Application.Current.Dispatcher.Invoke(new Action(() =>
+                {
+                    if (item.DataContext is EventNode)
+                    {
+                        var frames = new FrameCollection {((EventFrame) frame).Parent};
+                        ExportTags(item.DataContext as EventNode, frames);
+                    }
+                }));
+            }
+        }
+
+        private void ExportTags(EventNode node, FrameCollection frames)
+        {
+            var option = new ArchiveOption
+            {
+                Mode = ArchiveMode.Save,
+                Sources = new List<IArchiveSource>
+                {
+                    new NodeArchiveSource(node),
+                    new FrameArchiveSource(frames)
+                },
+                ArchiveType = ArchiveSourceType.Tag
+            };
+            ArchiveFactory.Instance().Archive(ref option);
 		}
 
 		private void TreeViewCopy_Executed(object sender, ExecutedRoutedEventArgs e)

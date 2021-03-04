@@ -141,6 +141,7 @@ namespace Profiler.Controls
 		public abstract void OnMouseHover(Point point, ThreadScroll scroll, List<object> dataContext);
 		public abstract void OnMouseClick(Point point, ThreadScroll scroll);
 		public abstract void ApplyFilter(DirectX.DirectXCanvas canvas, ThreadScroll scroll, HashSet<EventDescription> descriptions);
+        public abstract void Export(Point point, ThreadScroll scroll);
 
 		public Matrix GetWorldMatrix(ThreadScroll scroll, bool useMargin = true)
 		{
@@ -148,6 +149,11 @@ namespace Profiler.Controls
 							  -(scroll.ViewUnit.Left * scroll.Zoom),
 							  (Offset + (useMargin ? 1.0 * RenderParams.BaseMargin : 0.0)) / scroll.Height);
 		}
+
+		public virtual void Clear()
+        {
+			Group = null;
+        }
 
 		public delegate void OnVisibilityChangedHandler(ThreadRow row);
 		public event OnVisibilityChangedHandler VisibilityChanged;
@@ -292,6 +298,7 @@ namespace Profiler.Controls
 		public override void OnMouseHover(Point point, ThreadScroll scroll, List<object> dataContext) { }
 		public override void OnMouseClick(Point point, ThreadScroll scroll) { }
 		public override void ApplyFilter(DirectXCanvas canvas, ThreadScroll scroll, HashSet<EventDescription> descriptions) { }
+        public override void Export(Point point, ThreadScroll scroll) { }
 	}
 
 	class EventFilter

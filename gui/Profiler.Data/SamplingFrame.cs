@@ -404,5 +404,10 @@ namespace Profiler.Data
 			SampleCount = callstacks.Count;
 			Root = SamplingNode.Create(callstacks);
 		}
-	}
+
+        public override void Clear()
+        {
+
+        }
+    }
 }

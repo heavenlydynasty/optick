@@ -87,6 +87,13 @@ namespace Optick
 		}
 	}
 
+	void GPUProfiler::Clear()
+	{
+		for (Node* node : nodes)
+			Memory::Delete(node);
+		nodes.clear();
+	}
+
 	string GPUProfiler::GetName() const
 	{
 		return !nodes.empty() ? nodes[0]->name : string();
@@ -94,9 +101,7 @@ namespace Optick
 
 	GPUProfiler::~GPUProfiler()
 	{
-		for (Node* node : nodes)
-			Memory::Delete(node);
-		nodes.clear();
+		Clear();
 	}
 
 	void GPUProfiler::Reset()
@@ -152,6 +157,27 @@ namespace Optick
 		for (size_t frameIndex = 0; frameIndex < queryGpuframes.size(); ++frameIndex)
 			queryGpuframes[frameIndex].Reset();
 	}
+
+    void GPUProfiler::BeginFrame()
+    {
+        
+    }
+
+    void GPUProfiler::EndFrame()
+    {
+        
+    }
+
+    void GPUProfiler::BeginDrawEvent(uint64_t color, char const* formatString, ...)
+    {
+        OPTICK_UNUSED(color);
+        OPTICK_UNUSED(formatString);
+    }
+
+    void GPUProfiler::EndDrawEvent()
+    {
+        
+    }
 }
 #endif //USE_OPTICK
 

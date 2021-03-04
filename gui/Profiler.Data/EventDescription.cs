@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Windows.Media;
+//using Profiler.ViewModels;
 
 namespace Profiler.Data
 {
@@ -96,6 +97,8 @@ namespace Profiler.Data
 
 		public ThreadMask? Mask { get; set; }
 
+        //public CaptureSettingsViewModel.Granularity Granularity { get; private set; }
+
 		public override bool HasShortName { get { return (Flags & DescFlags.IS_CUSTOM_NAME) == 0; } }
 
 		public static Color GenerateRandomColor(String name, float variance = 0.0f)
@@ -144,6 +147,7 @@ namespace Profiler.Data
 			desc.Brush = new SolidColorBrush(desc.Color);
 			desc.Budget = reader.ReadSingle();
 			desc.Flags = (DescFlags)reader.ReadByte();
+            //desc.Granularity = (CaptureSettingsViewModel.Granularity) reader.ReadUInt32();
 			desc.FullName = fullName;
 
 			return desc;
@@ -399,6 +403,8 @@ namespace Profiler.Data
 	{
 		public EventDescription Description { get; private set; }
 		public EventFrame Frame { get; set; }
+        public Int32 DescriptionId { get; set; }
+        public UInt32 Id { get; set; }
 
 		protected Entry() { }
 
@@ -406,6 +412,11 @@ namespace Profiler.Data
 		{
 			this.Description = desc;
 		}
+
+		public void Clear()
+        {
+			Frame = null;
+        }
 
 		public void SetOverrideColor(Color color)
 		{
@@ -415,8 +426,9 @@ namespace Profiler.Data
 		protected void ReadEntry(BinaryReader reader, EventDescriptionBoard board)
 		{
 			ReadEventData(reader);
-			int index = reader.ReadInt32();
-			Description = (index != -1 && index < board.Board.Count) ? board[index] : null;
+			DescriptionId = reader.ReadInt32();
+			Description = DescriptionId != -1 ? board[DescriptionId] : null;
+            Id = reader.ReadUInt32();
 		}
 
 		public static Entry Read(BinaryReader reader, EventDescriptionBoard board)

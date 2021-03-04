@@ -81,7 +81,8 @@ if isVisualStudio then
 	debugdir (outFolderRoot)
 	buildoptions { 
 		"/wd4127", -- Conditional expression is constant
-		"/wd4091"  -- 'typedef ': ignored on left of '' when no variable is declared
+		"/wd4091", -- 'typedef ': ignored on left of '' when no variable is declared
+		"/wd4456" -- Local Variable overide
 	}
 end
 
@@ -153,7 +154,11 @@ end
 
 	includedirs
 	{
-		"src"
+		"src",
+		"3rdparty/tbb/include"
+	}
+	libdirs {
+		"3rdparty/tbb/lib",
 	}
 	
 	if isDX12 then
@@ -287,7 +292,8 @@ if isDX12 then
 
 		buildoptions { 
 		"/wd4324", -- structure was padded due to alignment specifier
-		"/wd4238"  -- nonstandard extension used: class rvalue used as lvalue
+		"/wd4238",  -- nonstandard extension used: class rvalue used as lvalue
+		"/wd4456" -- Local Variable overide
 		}
 		
 		links { 
@@ -341,6 +347,7 @@ if isVulkan then
 			"/wd4700", -- uninitialized local variable '***' used
 			"/wd4702", -- unreachable code
 			"/wd4127", -- conditional expression is constant but don't want to bump to C++17
+			"/wd4456" -- Local Variable overide
 		}
 	
 		files {

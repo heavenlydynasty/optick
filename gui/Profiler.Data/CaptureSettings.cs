@@ -11,9 +11,23 @@ namespace Profiler.Data
 		public Mode	Mode { get; set; } = (Mode.INSTRUMENTATION_CATEGORIES | Mode.INSTRUMENTATION_EVENTS);
 		public UInt32 CategoryMask { get; set; } = UInt32.MaxValue;
 		public UInt32 SamplingFrequencyHz { get; set; } = 1000;
+        public UInt32 CpuGranularityLv { get; set; } = 0;
+        public UInt32 GpuGranularityLv { get; set; } = 0;
 		public UInt32 FrameLimit { get; set; } = 0;
 		public UInt32 TimeLimitUs { get; set; } = 0;
 		public UInt32 MaxSpikeLimitUs { get; set; } = 0;
 		public UInt64 MemoryLimitMb { get; set; } = 0;
+		public UInt64 MinFilterLimitUs { get; set; } = 0;
+		public UInt64 MaxFilterLimitUs { get; set; } = 0;
+
+		private static CaptureSettings settings_;
+		public static CaptureSettings Instance()
+        {
+			if (null == settings_)
+            {
+				settings_ = new CaptureSettings();
+            }
+			return settings_;
+		}
 	}
 }

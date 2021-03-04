@@ -135,6 +135,11 @@ namespace Profiler.Data
 			return System.Text.Encoding.ASCII.GetString(reader.ReadBytes(reader.ReadInt32()));
 		}
 
+        public static String ReadBinaryDefaultString(BinaryReader reader)
+        {
+            return System.Text.Encoding.Default.GetString(reader.ReadBytes(reader.ReadInt32()));
+        }
+
         public static void WriteBinaryString(BinaryWriter writer, String text)
         {
             writer.Write(text != null ? text.Length : 0);

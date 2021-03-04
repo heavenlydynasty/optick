@@ -136,6 +136,22 @@
                                         <ContentControl Style="{StaticResource appbar_camera_flash}" Margin="-10" Width="26" Height="26" />
                                     </MenuItem.Icon>
                                 </MenuItem>
+                                <Separator />
+                                <MenuItem Header="Export" Click="MenuExportFunctions">
+                                    <MenuItem.Icon>
+                                        <ContentControl Style="{StaticResource appbar_save}" Margin="-10" Width="26" Height="26"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="ExportTags(Document)" Click="MenuDocumentExportTags">
+                                    <MenuItem.Icon>
+                                        <ContentControl Style="{StaticResource appbar_save}" Margin="-10" Width="26" Height="26"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem Header="ExportTags(Frame)" Click="MenuExportFrameTags">
+                                    <MenuItem.Icon>
+                                        <ContentControl Style="{StaticResource appbar_save}" Margin="-10" Width="26" Height="26"/>
+                                    </MenuItem.Icon>
+                                </MenuItem>
                             </ContextMenu>
                         </Grid.ContextMenu>
                         <Grid.ColumnDefinitions>

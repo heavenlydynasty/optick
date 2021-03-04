@@ -8,6 +8,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using Profiler.Archive;
 
 namespace Profiler.Controls
 {
@@ -42,9 +43,16 @@ namespace Profiler.Controls
 		{
 			if (File.Exists(path))
 			{
-				using (Stream stream = Capture.Open(path))
+                var option = new ArchiveOption
+                {
+                    Mode = ArchiveMode.Open,
+                    Pipeline = ArchivePipeline.Internel
+                };
+                ArchiveFactory.Instance().Archive(ref option);
+
+                using (option.InternelStream)
 				{
-					DataResponse response = DataResponse.Create(stream);
+					DataResponse response = DataResponse.Create(option.InternelStream);
 					if (response != null)
 					{
 						if (response.ResponseType == DataResponse.Type.SummaryPack)

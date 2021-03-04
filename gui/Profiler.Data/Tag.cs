@@ -16,7 +16,9 @@ namespace Profiler.Data
 
 	public class Tag : ITick, IComparable<Tag>
 	{
+        public UInt32 Id { get; set; }
 		public EventDescription Description { get; set; }
+        public UInt32 EventId { get; set; }
 		public Tick Time { get; set; }
 		public String Name => Description.FullName;
 		public virtual String FormattedValue { get; }
@@ -31,9 +33,11 @@ namespace Profiler.Data
 
 		public virtual void Read(BinaryReader reader, EventDescriptionBoard board)
 		{
+            Id = reader.ReadUInt32();
 			Time = new Tick { Start = Durable.ReadTime(reader) };
 			int descriptionID = reader.ReadInt32();
-			Description = (0 <= descriptionID && descriptionID < board.Board.Count) ? board.Board[descriptionID] : null;
+		Description = (0 <= descriptionID && descriptionID < board.Board.Count) ? board.Board[descriptionID] : null;
+            EventId = reader.ReadUInt32();
 		}
 	}
 
@@ -103,7 +107,8 @@ namespace Profiler.Data
 		public override void Read(BinaryReader reader, EventDescriptionBoard board)
 		{
 			base.Read(reader, board);
-			Value = Utils.ReadBinaryString(reader);
+
+            Value = Utils.ReadBinaryDefaultString(reader);
 		}
 
 		public override String FormattedValue => Value;

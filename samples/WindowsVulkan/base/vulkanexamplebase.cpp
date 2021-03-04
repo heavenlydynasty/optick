@@ -228,49 +228,51 @@ VkPipelineShaderStageCreateInfo VulkanExampleBase::loadShader(std::string fileNa
 void VulkanExampleBase::renderFrame()
 {
 	OPTICK_FRAME("MainThread");
-	OPTICK_CATEGORY(OPTICK_FUNC, Optick::Category::Scene);
+    {
+        OPTICK_CATEGORY(OPTICK_FUNC, Optick::Category::Scene);
 
-	auto tStart = std::chrono::high_resolution_clock::now();
-	if (viewUpdated)
-	{
-		viewUpdated = false;
-		viewChanged();
-	}
+        auto tStart = std::chrono::high_resolution_clock::now();
+        if (viewUpdated)
+        {
+            viewUpdated = false;
+            viewChanged();
+        }
 
-	render();
-	frameCounter++;
-	auto tEnd = std::chrono::high_resolution_clock::now();
-	auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
-	frameTimer = (float)tDiff / 1000.0f;
-	camera.update(frameTimer);
-	if (camera.moving())
-	{
-		viewUpdated = true;
-	}
-	// Convert to clamped timer value
-	if (!paused)
-	{
-		timer += timerSpeed * frameTimer;
-		if (timer > 1.0)
-		{
-			timer -= 1.0f;
-		}
-	}
-	fpsTimer += (float)tDiff;
-	if (fpsTimer > 1000.0f)
-	{
-		lastFPS = static_cast<uint32_t>((float)frameCounter * (1000.0f / fpsTimer));
+        render();
+        frameCounter++;
+        auto tEnd = std::chrono::high_resolution_clock::now();
+        auto tDiff = std::chrono::duration<double, std::milli>(tEnd - tStart).count();
+        frameTimer = (float)tDiff / 1000.0f;
+        camera.update(frameTimer);
+        if (camera.moving())
+        {
+            viewUpdated = true;
+        }
+        // Convert to clamped timer value
+        if (!paused)
+        {
+            timer += timerSpeed * frameTimer;
+            if (timer > 1.0)
+            {
+                timer -= 1.0f;
+            }
+        }
+        fpsTimer += (float)tDiff;
+        if (fpsTimer > 1000.0f)
+        {
+            lastFPS = static_cast<uint32_t>((float)frameCounter * (1000.0f / fpsTimer));
 #if defined(_WIN32)
-		if (!settings.overlay)	{
-			std::string windowTitle = getWindowTitle();
-			SetWindowTextA(window, windowTitle.c_str());
-		}
+            if (!settings.overlay) {
+                std::string windowTitle = getWindowTitle();
+                SetWindowTextA(window, windowTitle.c_str());
+            }
 #endif
-		fpsTimer = 0.0f;
-		frameCounter = 0;
-	}
-	// TODO: Cap UI overlay update rates
-	updateOverlay();
+            fpsTimer = 0.0f;
+            frameCounter = 0;
+        }
+        // TODO: Cap UI overlay update rates
+        updateOverlay();
+    }
 }
 
 void VulkanExampleBase::renderLoop()

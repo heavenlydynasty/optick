@@ -79,6 +79,7 @@ namespace Profiler.Data
 
 	public class EventFrame : Frame, IDurable, IComparable<EventFrame>, INotifyPropertyChanged
 	{
+		public EventFrame Parent { get; set; }
 		public override DataResponse.Type ResponseType { get { return DataResponse.Type.EventFrame; } }
 
 		public FrameHeader Header { get; private set; }
@@ -100,6 +101,39 @@ namespace Profiler.Data
 			{
 				tags = value;
 			}
+		}
+
+		public override void Clear()
+		{
+			Parent = null;
+			if (null != root)
+			{
+				root.Clear();
+				root = null;
+			}
+			if (null != categoriesTree)
+			{
+				categoriesTree.Clear();
+				categoriesTree = null;
+			}
+			if (null != tags)
+			{
+				tags.Clear();
+				tags = null;
+			}
+			if (null != Entries)
+            {
+				foreach (var entry in Entries)
+					entry.Clear();
+				Entries = null;
+            }
+			if (null != Categories)
+			{
+				foreach (var category in Categories)
+					category.Clear();
+				Categories = null;
+			}
+			Group = null;
 		}
 
 		public T FindTag<T>(String name) where T : Tag
@@ -144,7 +178,7 @@ namespace Profiler.Data
 				if (root == null)
 				{
 					root = new EventTree(this, Entries);
-					root.ApplyTags(tags);
+                    root.BuildTags(tags);
 				}
 
 			}
@@ -169,7 +203,7 @@ namespace Profiler.Data
 		{
 			get
 			{
-				return String.Format("{0:0} ms", Header.Duration);
+				return String.Format(@"{0:0} ms {1}/{2}/{3}", Header.Duration, Board.Count, Entries.Count, Tags.Count);
 			}
 		}
 
@@ -393,7 +427,8 @@ namespace Profiler.Data
 		}
 
 		public EventFrame(EventFrame frame, EventNode node) : base(null, frame.Group)
-		{
+        {
+            Parent = frame;
 			List<Entry> entries = new List<Entry>();
 			node.ForEach((n, level) => { entries.Add((n as EventNode).Entry); return true; });
 			Init(new FrameHeader(new Durable(node.Entry.Start, node.Entry.Finish), frame.Header.ThreadIndex, frame.Header.FiberIndex), entries);
